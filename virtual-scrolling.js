@@ -1,7 +1,7 @@
 import Region from "./Region.js";
 
 export default function virtualScrolling(viewport, getLine, countOfAllLines, lineHeight) {
-	var version = "0.2.0";
+	var version = "1.0.0";
 
 	
 	var shell = document.createElement("div");
