@@ -14,7 +14,9 @@
 			border: 1px solid #000;
 			overflow: auto;
 		"></div>
-		<script type="text/javascript">
+		<script type="module">
+			import virtualScrolling from "./../virtual-scrolling.js";
+			
 			const vp1API = virtualScrolling(vp1, getLine, 100, 30);
 
 			function getLine(num) {
