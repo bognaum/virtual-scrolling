@@ -69,7 +69,7 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 
 	function initView() {
 		var
-			realLinesCount = getCountOfHalfVisibleLines(),
+			realLinesCount = getHalfVisibleLinesCount(),
 			carriageHeight = realLinesCount * _.lineHeight,
 			carriageBottomMargin = _.lineHeight * _.countOfAllLines - carriageHeight,
 			firstLineNum = _.firstVisibleLineNum,
@@ -91,7 +91,7 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 			topHiddenLinesCount = Math.floor(topHiddenSpace / _.lineHeight);
 
 		let
-			realLinesCount = getCountOfHalfVisibleLines(),
+			realLinesCount = getHalfVisibleLinesCount(),
 			firstVisibleLineNum = topHiddenLinesCount,
 			lastVisibleLineNum = topHiddenLinesCount + realLinesCount - 1;
 
@@ -249,7 +249,7 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 		return _.viewport.getBoundingClientRect().height;
 	}
 
-	function getCountOfHalfVisibleLines() {
+	function getHalfVisibleLinesCount() {
 		return Math.floor(_.getViewHeight() / _.lineHeight + 2);
 	}
 
