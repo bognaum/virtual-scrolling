@@ -1,13 +1,13 @@
-function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
+import Region from "./Region.js";
+
+export default function virtualScrolling(viewport, getLine, countOfAllLines, lineHeight) {
 	var version = "0.2.0";
 
-	const Region = _Region();
-
 	
-	var incub = document.createElement("div");
+	var shell = document.createElement("div");
 
 	var _ = {
-		view,
+		viewport,
 		carriage : null,
 		getViewHeight,
 		countOfAllLines,
@@ -25,7 +25,7 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 	_.allLinesHeight = _.countOfAllLines * _.lineHeight;
 	_.lastLineNum = _.countOfAllLines - 1;
 
-	_.view.dataset.virtual_scrollingVer = version;
+	_.viewport.dataset.virtual_scrollingVer = version;
 
 	_.carriage = create(`
 		<div
@@ -37,12 +37,12 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 		></div>
 	`);
 
-	_.view.appendChild(_.carriage);
-	_.view.addEventListener("scroll", function(e) {
+	_.viewport.appendChild(_.carriage);
+	_.viewport.addEventListener("scroll", function(e) {
 		render(this.scrollTop);
 	}, false);
 	window.addEventListener("resize", function(e) {
-		render(_.view.scrollTop, true);
+		render(_.viewport.scrollTop, true);
 	}, false);
 
 	initView();
@@ -57,9 +57,9 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 		getMiddleFullyVisibleLineNum, // Возвращает номер средней полностью видимой строки.
 		getLastFullyVisibleLineNum,   // Возвращает номер последней полностью видимой строки.
 		getLastSemiVisibleLineNum,    // Возвращает номер последней частично видимой строки.
-		setOnTop,                     // Задаёт номер строкт, которую нужно установить вверху.
-		setOnMiddle,                  // Задаёт номер строкт, которую нужно установить по середине.
-		setOnBottom,                  // Задаёт номер строкт, которую нужно установить внизу.
+		setOnTop,                     // Задаёт номер строки, которую нужно установить вверху.
+		setOnMiddle,                  // Задаёт номер строки, которую нужно установить по середине.
+		setOnBottom,                  // Задаёт номер строки, которую нужно установить внизу.
 		onAfterRender : null,         // Скрипт события. Исполняется после перерендеринга строк в каретке.
 	}
 
@@ -69,11 +69,11 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 
 	function initView() {
 		var
-			countOfVisibleLines = getCountOfVisibleLines(),
-			carriageHeight = countOfVisibleLines * _.lineHeight,
+			realLinesCount = getHalfVisibleLinesCount(),
+			carriageHeight = realLinesCount * _.lineHeight,
 			carriageBottomMargin = _.lineHeight * _.countOfAllLines - carriageHeight,
 			firstLineNum = _.firstVisibleLineNum,
-			lastLineNum = firstLineNum + countOfVisibleLines - 1;
+			lastLineNum = firstLineNum + realLinesCount - 1;
 
 		_.carriage.innerHTML = "";
 		
@@ -82,27 +82,28 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 		}
 
 		_.carriage.style.margimBottom = carriageBottomMargin+"px";
+		window._e_ = code => eval(code);
 	}
 
 	function render(scrollTop, rerenderingFlag) {
 		const 
 			topHiddenSpace = scrollTop,
-			countOfTopHiddenLines = Math.floor(topHiddenSpace / _.lineHeight);
+			topHiddenLinesCount = Math.floor(topHiddenSpace / _.lineHeight);
 
-		var
-			countOfVisibleLines = getCountOfVisibleLines(),
-			firstVisibleLineNum = countOfTopHiddenLines,
-			lastVisibleLineNum = countOfTopHiddenLines + countOfVisibleLines - 1;
+		let
+			realLinesCount = getHalfVisibleLinesCount(),
+			firstVisibleLineNum = topHiddenLinesCount,
+			lastVisibleLineNum = topHiddenLinesCount + realLinesCount - 1;
 
 		if (lastVisibleLineNum > _.lastLineNum) {
 			lastVisibleLineNum = _.lastLineNum;
-			countOfVisibleLines = lastVisibleLineNum - firstVisibleLineNum + 1;
+			realLinesCount = lastVisibleLineNum - firstVisibleLineNum + 1;
 		}
 
 		const
-			carriageHeight = countOfVisibleLines * _.lineHeight,
-			carriageTopMargin = countOfTopHiddenLines * _.lineHeight,
-			carriageBottomMargin = (_.countOfAllLines - countOfTopHiddenLines - countOfVisibleLines) * _.lineHeight;
+			carriageHeight = realLinesCount * _.lineHeight,
+			carriageTopMargin = topHiddenLinesCount * _.lineHeight,
+			carriageBottomMargin = (_.countOfAllLines - topHiddenLinesCount - realLinesCount) * _.lineHeight;
 
 		const 
 			visibleRange = new Region(firstVisibleLineNum, lastVisibleLineNum + 1),
@@ -116,6 +117,7 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 		if (firstVisibleLineNum != _.firstVisibleLineNum || rerenderingFlag) {
 
 			_.carriage.style.marginTop = carriageTopMargin+"px";
+
 			if (oldR.first < newR.first) {
 
 				while (
@@ -143,13 +145,13 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 
 			}
 
-			if (oldR.afterLast < newR.afterLast) {
+			if (oldR.next < newR.next) {
 				newR.arr.forEach((v) => {
 					if (!oldR.includes(v)) 
 						_.carriage.appendChild(_.getLine(v))
 				});
 
-			} else if (newR.afterLast < oldR.afterLast) {
+			} else if (newR.next < oldR.next) {
 
 				while (
 					_.carriage.lastElementChild
@@ -171,65 +173,9 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 
 	}
 
-	function _Region() {
-		return class Region {
-			constructor (first, afterLast, step=1) {
-				this.first = first;
-				this.afterLast = afterLast;
-				this.step = step;
-
-				if (afterLast === undefined) {
-					this.first = 0;
-					this.afterLast = first;
-				}
-			}
-
-			* getIter () {
-				if (0 < this.step) 
-					for (var i = this.first; i < this.afterLast; i += this.step) 
-						yield i;
-				else if (this.step < 0)
-					for (var i = this.first; i > this.afterLast; i += this.step) 
-						yield i;
-				else if (this.step == 0)
-					yield null;
-			}
-
-			get arr () {
-				var 
-					arr = [],
-					iterator = this.getIter(),
-					n = 0;
-				for (var v of iterator) {
-					arr[n] = v;
-					n ++;
-				}
-				return arr;
-			}
-
-			get length () {
-				if (0 < this.step) 
-					return Math.floor((this.afterLast - this.first) / this.step);
-				else if (this.step < 0)
-					return Math.floor((this.first - this.afer) / this.step);
-				else if (this.step == 0)
-					return Infinity;
-			}
-
-			includes (num) {
-				if (0 < this.step) 
-					return this.first <= num && num < this.afterLast;
-				else if (this.step < 0)
-					return this.afterLast <= num && num < this.first;
-				else if (this.step == 0)
-					return false;
-			}
-		}
-	}
-
 	function isItFullVisible(num) {
 		const 
-			viewStart = _.view.scrollTop,
+			viewStart = _.viewport.scrollTop,
 			viewEnd   = viewStart + getViewHeight(),
 			lineStart = num * lineHeight,
 			lineEnd   = (num + 1) * lineHeight;
@@ -237,17 +183,17 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 	}
 
 	function isResized() {
-		render(_.view.scrollTop, true);
+		render(_.viewport.scrollTop, true);
 	}
 
 	function getFirstSemiVisibleLineNum() {
-		const topHiddenSpace = _.view.scrollTop;
+		const topHiddenSpace = _.viewport.scrollTop;
 		return Math.floor(topHiddenSpace / _.lineHeight);
 	}
 
 	function getFirstFullyVisibleLineNum() {
 		const 
-			topHiddenSpace = _.view.scrollTop,
+			topHiddenSpace = _.viewport.scrollTop,
 			num = Math.ceil(topHiddenSpace / _.lineHeight);
 		if (isItFullVisible(num))
 			return num;
@@ -256,13 +202,13 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 	}
 
 	function getMiddleVisibleLineNum() {
-		const topHiddenSpace = _.view.scrollTop;
+		const topHiddenSpace = _.viewport.scrollTop;
 		return Math.floor((topHiddenSpace + getViewHeight() / 2) / _.lineHeight);
 	}
 
 	function getMiddleFullyVisibleLineNum() {
 		const 
-			topHiddenSpace = _.view.scrollTop,
+			topHiddenSpace = _.viewport.scrollTop,
 			num = Math.floor((topHiddenSpace + getViewHeight() / 2) / _.lineHeight);
 		if (isItFullVisible(num))
 			return num;
@@ -272,7 +218,7 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 
 	function getLastFullyVisibleLineNum() {
 		const 
-			topHiddenSpace = _.view.scrollTop,
+			topHiddenSpace = _.viewport.scrollTop,
 			num = Math.floor((topHiddenSpace + getViewHeight()) / _.lineHeight) - 1;
 		if (isItFullVisible(num))
 			return num;
@@ -281,35 +227,35 @@ function virtualScrolling(view, getLine, countOfAllLines, lineHeight) {
 	}
 
 	function getLastSemiVisibleLineNum() {
-		const topHiddenSpace = _.view.scrollTop;
+		const topHiddenSpace = _.viewport.scrollTop;
 		return Math.floor((topHiddenSpace + getViewHeight()) / _.lineHeight);
 	}
 
 	function setOnTop(strNum) {
-		_.view.scrollTop = strNum * _.lineHeight;
+		_.viewport.scrollTop = strNum * _.lineHeight;
 	}
 
 
 	function setOnBottom(strNum) {
-		_.view.scrollTop = strNum * _.lineHeight - _.getViewHeight() + _.lineHeight;
+		_.viewport.scrollTop = strNum * _.lineHeight - _.getViewHeight() + _.lineHeight;
 	}
 
 	function setOnMiddle(strNum) {
-		_.view.scrollTop = strNum * _.lineHeight - (_.getViewHeight() - _.lineHeight) / 2;
+		_.viewport.scrollTop = strNum * _.lineHeight - (_.getViewHeight() - _.lineHeight) / 2;
 	}
 
 
 	function getViewHeight() {
-		return _.view.getBoundingClientRect().height;
+		return _.viewport.getBoundingClientRect().height;
 	}
 
-	function getCountOfVisibleLines() {
+	function getHalfVisibleLinesCount() {
 		return Math.floor(_.getViewHeight() / _.lineHeight + 2);
 	}
 
 	function create(html) {
-		incub.innerHTML = html;
-		return incub.children[0];
+		shell.innerHTML = html;
+		return shell.children[0];
 	}
 
 }

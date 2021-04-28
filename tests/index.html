@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script type="text/javascript" src="./../virtual-scrolling.js"></script>
+	<title>virtual-scrolling</title>
+</head>
+<body>
+	<div class="container">
+		<div id="vp1" style="
+			height: 400px; 
+			width: 500px; 
+			border: 1px solid #000;
+			overflow: auto;
+		"></div>
+		<script type="module">
+			import virtualScrolling from "./../virtual-scrolling.js";
+			
+			const vp1API = virtualScrolling(vp1, getLine, 100, 30);
+
+			function getLine(num) {
+				return eHTML(`<div style="
+					height: 28px; 
+					border: 1px solid #333;
+				">${num}</div>`);
+			}
+
+			function eHTML(code, shell=null) {
+				const _shell = 
+					! shell                  ? document.createElement("div") :
+					typeof shell == "string" ? document.createElement(shell) :
+					typeof shell == "object" ? shell :
+						null;
+				_shell.innerHTML = code;
+				return _shell.children[0];
+			}
+		</script>
+	</div>
+</body>
+</html>
