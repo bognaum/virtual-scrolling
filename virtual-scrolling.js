@@ -69,11 +69,11 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 
 	function initView() {
 		var
-			countOfHalfVisibleLines = getCountOfHalfVisibleLines(),
-			carriageHeight = countOfHalfVisibleLines * _.lineHeight,
+			realLinesCount = getCountOfHalfVisibleLines(),
+			carriageHeight = realLinesCount * _.lineHeight,
 			carriageBottomMargin = _.lineHeight * _.countOfAllLines - carriageHeight,
 			firstLineNum = _.firstVisibleLineNum,
-			lastLineNum = firstLineNum + countOfHalfVisibleLines - 1;
+			lastLineNum = firstLineNum + realLinesCount - 1;
 
 		_.carriage.innerHTML = "";
 		
@@ -88,22 +88,22 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 	function render(scrollTop, rerenderingFlag) {
 		const 
 			topHiddenSpace = scrollTop,
-			countOfTopHiddenLines = Math.floor(topHiddenSpace / _.lineHeight);
+			topHiddenLinesCount = Math.floor(topHiddenSpace / _.lineHeight);
 
 		let
-			countOfHalfVisibleLines = getCountOfHalfVisibleLines(),
-			firstVisibleLineNum = countOfTopHiddenLines,
-			lastVisibleLineNum = countOfTopHiddenLines + countOfHalfVisibleLines - 1;
+			realLinesCount = getCountOfHalfVisibleLines(),
+			firstVisibleLineNum = topHiddenLinesCount,
+			lastVisibleLineNum = topHiddenLinesCount + realLinesCount - 1;
 
 		if (lastVisibleLineNum > _.lastLineNum) {
 			lastVisibleLineNum = _.lastLineNum;
-			countOfHalfVisibleLines = lastVisibleLineNum - firstVisibleLineNum + 1;
+			realLinesCount = lastVisibleLineNum - firstVisibleLineNum + 1;
 		}
 
 		const
-			carriageHeight = countOfHalfVisibleLines * _.lineHeight,
-			carriageTopMargin = countOfTopHiddenLines * _.lineHeight,
-			carriageBottomMargin = (_.countOfAllLines - countOfTopHiddenLines - countOfHalfVisibleLines) * _.lineHeight;
+			carriageHeight = realLinesCount * _.lineHeight,
+			carriageTopMargin = topHiddenLinesCount * _.lineHeight,
+			carriageBottomMargin = (_.countOfAllLines - topHiddenLinesCount - realLinesCount) * _.lineHeight;
 
 		const 
 			visibleRange = new Region(firstVisibleLineNum, lastVisibleLineNum + 1),
