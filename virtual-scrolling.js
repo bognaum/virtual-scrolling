@@ -1,6 +1,4 @@
-import Region from "./Region.js";
-
-export default function virtualScrolling(viewport, getLine, countOfAllLines, lineHeight) {
+export default function virtualScrolling(viewport, getLine, allLinesCount, lineHeight) {
 	var version = "1.0.0";
 
 	
@@ -10,20 +8,21 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 		viewport,
 		carriage : null,
 		getViewHeight,
-		countOfAllLines,
+		allLinesCount,
 		lineHeight,
 		dsLineNum : "virtualScrollingLineNum",
 		getLine : function(num) {
 			const lineEl = getLine(num);
 			lineEl.dataset[_.dsLineNum] = num;
+			lineEl.lNum = num;
 			return lineEl;
 		},
 		firstVisibleLineNum : 0,
-
+		showLNums: [0],
 	};
 
-	_.allLinesHeight = _.countOfAllLines * _.lineHeight;
-	_.lastLineNum = _.countOfAllLines - 1;
+	_.allLinesHeight = _.allLinesCount * _.lineHeight;
+	_.lastLineNum = _.allLinesCount - 1;
 
 	_.viewport.dataset.virtual_scrollingVer = version;
 
@@ -32,7 +31,7 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 			class="carriage"
 			style="
 				margin-top: 0px;
-				margin-bottom: ${_.lineHeight * _.countOfAllLines}px;
+				margin-bottom: 0px;
 			"
 		></div>
 	`);
@@ -47,7 +46,7 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 
 	initView();
 
-	var pluginInterface = {
+	const pluginInterface = {
 		initView,                     // Вызвать после замены модели.
 		isResized,                    // Вызвать, если изменился размер по высоте (y).
 		isItFullVisible,              // Возвращает true если строка полностью видна.
@@ -68,71 +67,54 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 
 
 	function initView() {
-		var
-			realLinesCount = getHalfVisibleLinesCount(),
-			carriageHeight = realLinesCount * _.lineHeight,
-			carriageBottomMargin = _.lineHeight * _.countOfAllLines - carriageHeight,
-			firstLineNum = _.firstVisibleLineNum,
-			lastLineNum = firstLineNum + realLinesCount - 1;
+		const 
+			{viewOvLoc, lineLayout, showLNums} = calculate(_),
+			lH = lineHeight;
 
-		_.carriage.innerHTML = "";
-		
-		for (var i = firstLineNum; i <= lastLineNum; i ++) {
-			_.carriage.appendChild(_.getLine(i))
+		for (let v of showLNums) {
+			_.carriage.appendChild(_.getLine(v));
 		}
 
-		_.carriage.style.margimBottom = carriageBottomMargin+"px";
-		window._e_ = code => eval(code);
+		_.showLNums = showLNums;
+
+		_.carriage.style.marginTop    = `${lineLayout.top    * lH}px`;
+		_.carriage.style.marginBottom = `${lineLayout.bottom * lH}px`;
 	}
 
 	function render(scrollTop, rerenderingFlag) {
-		const 
-			topHiddenSpace = scrollTop,
-			topHiddenLinesCount = Math.floor(topHiddenSpace / _.lineHeight);
-
-		let
-			realLinesCount = getHalfVisibleLinesCount(),
-			firstVisibleLineNum = topHiddenLinesCount,
-			lastVisibleLineNum = topHiddenLinesCount + realLinesCount - 1;
-
-		if (lastVisibleLineNum > _.lastLineNum) {
-			lastVisibleLineNum = _.lastLineNum;
-			realLinesCount = lastVisibleLineNum - firstVisibleLineNum + 1;
-		}
-
-		const
-			carriageHeight = realLinesCount * _.lineHeight,
-			carriageTopMargin = topHiddenLinesCount * _.lineHeight,
-			carriageBottomMargin = (_.countOfAllLines - topHiddenLinesCount - realLinesCount) * _.lineHeight;
 
 		const 
-			visibleRange = new Region(firstVisibleLineNum, lastVisibleLineNum + 1),
-			oldCarriageRange = new Region(
-				parseInt(_.carriage.firstElementChild.dataset[_.dsLineNum]), 
-				parseInt(_.carriage.lastElementChild.dataset[_.dsLineNum]) + 1
-			),
-			oldR = oldCarriageRange,
-			newR = visibleRange;
+			{viewOvLoc, lineLayout, showLNums} = calculate(_, scrollTop),
+			lH = lineHeight;
 
-		if (firstVisibleLineNum != _.firstVisibleLineNum || rerenderingFlag) {
+		const 
+			oldArr = _.showLNums,
+			newArr = showLNums;
 
-			_.carriage.style.marginTop = carriageTopMargin+"px";
+		if (newArr[0] != oldArr[0] || rerenderingFlag) {
 
-			if (oldR.first < newR.first) {
+			_.carriage.style.marginTop    = `${lineLayout.top    * lH}px`;
+			_.carriage.style.marginBottom = `${lineLayout.bottom * lH}px`;
+
+
+			if (oldArr[0] < newArr[0]) {
 
 				while (
 					_.carriage.firstElementChild
 						&&
-					!newR.includes(_.carriage.firstElementChild.dataset[_.dsLineNum])
+					! newArr.includes(
+						parseInt(_.carriage.
+							firstElementChild.dataset[_.dsLineNum]))
+
 				) {
 					_.carriage.removeChild(_.carriage.firstElementChild);
 				}
 
-			} else if (newR.first < oldR.first) {
+			} else if (oldArr[0] > newArr[0]) {
 
-				newR.arr.forEach((v,i,a) => {
+				newArr.forEach((v,i,a) => {
 					
-					if (!oldR.includes(v)) {
+					if (!oldArr.includes(v)) {
 
 						var line = _.getLine(v);
 						if (_.carriage.children[i]){
@@ -145,32 +127,71 @@ export default function virtualScrolling(viewport, getLine, countOfAllLines, lin
 
 			}
 
-			if (oldR.next < newR.next) {
-				newR.arr.forEach((v) => {
-					if (!oldR.includes(v)) 
+			if (oldArr.last() < newArr.last()) {
+				newArr.forEach((v) => {
+					if (!oldArr.includes(v)) 
 						_.carriage.appendChild(_.getLine(v))
 				});
 
-			} else if (newR.next < oldR.next) {
+			} else if (oldArr.last() > newArr.last()) {
 
 				while (
 					_.carriage.lastElementChild
 						&&
-					!newR.includes(_.carriage.lastElementChild.dataset[_.dsLineNum])
+					! newArr.includes(
+						parseInt(_.carriage.
+							lastElementChild.dataset[_.dsLineNum]))
 				) {
 					_.carriage.removeChild(_.carriage.lastElementChild);
 				}
 
 			}
 
-			_.carriage.style.marginBottom = carriageBottomMargin+"px";
-			
-			_.firstVisibleLineNum = firstVisibleLineNum;
+			_.showLNums = showLNums;
 
 			if (pluginInterface.onAfterRender)
 				pluginInterface.onAfterRender();
 		}
 
+	}
+
+	function calculate(_, scrollTop=0) {
+		const 
+			viewOvLoc = {
+				from: scrollTop,
+				to  : scrollTop + _.viewport.getBoundingClientRect().height
+			},
+			lineLayout = {
+				top: null,
+				show: null,
+				bottom: null,
+			};
+
+			lineLayout.top = (() => {
+				let n = Math.floor(viewOvLoc.from / _.lineHeight) - 1;
+				n = (n < 0)? 0 : n;
+
+				return n;
+			})();
+			lineLayout.show = (() => {
+				let n = Math.ceil(viewOvLoc.to / _.lineHeight) + 1;
+				n = (_.allLinesCount < n)? _.allLinesCount : n;
+
+				return  n - lineLayout.top;
+			})();
+			lineLayout.bottom = _.allLinesCount 
+				- lineLayout.top - lineLayout.show;
+
+			const showLNums = new Array(lineLayout.show);
+
+			for (let [i,v] of showLNums.entries()) 
+				showLNums[i] = lineLayout.top + i;
+
+			showLNums.last = _.showLNums.last = function() {
+				return this[this.length - 1];
+			}
+
+		return {viewOvLoc, lineLayout, showLNums};
 	}
 
 	function isItFullVisible(num) {
