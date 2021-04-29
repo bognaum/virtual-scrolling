@@ -26,15 +26,7 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 
 	_.viewport.dataset.virtual_scrollingVer = version;
 
-	_.carriage = create(`
-		<div
-			class="carriage"
-			style="
-				margin-top: 0px;
-				margin-bottom: 0px;
-			"
-		></div>
-	`);
+	_.carriage = create(`<div class="carriage"></div>`);
 
 	_.viewport.appendChild(_.carriage);
 	_.viewport.addEventListener("scroll", function(e) {
