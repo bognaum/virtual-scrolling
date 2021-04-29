@@ -40,6 +40,7 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 	initView();
 
 	const pluginInterface = {
+		viewport: _.viewport,         // Вьюпорт.
 		initView,                     // Вызвать после замены модели.
 		isResized,                    // Вызвать, если изменился размер по высоте (y).
 		isItFullVisible,              // Возвращает true если строка полностью видна.
