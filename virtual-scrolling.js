@@ -44,6 +44,11 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 		render(_.viewport.scrollTop, true);
 	}, false);
 
+	_.viewport.getHeight = function() {
+		// return this.getBoundingClientRect().height;
+		return parseInt(getComputedStyle(this).height);
+	}
+
 	initView();
 
 	const pluginInterface = {
@@ -159,7 +164,7 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 		const 
 			viewOvLoc = {
 				from: scrollTop,
-				to  : scrollTop + _.viewport.getBoundingClientRect().height
+				to  : scrollTop + _.viewport.getHeight()
 			},
 			lineLayout = {
 				top: null,
