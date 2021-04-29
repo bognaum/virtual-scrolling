@@ -32,11 +32,6 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 		render(_.viewport.scrollTop, true);
 	}, false);
 
-	_.viewport.getHeight = function() {
-		// return this.getBoundingClientRect().height;
-		return parseInt(getComputedStyle(this).height);
-	}
-
 	initView();
 
 	const pluginInterface = {
@@ -154,7 +149,7 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 		const 
 			viewOvLoc = {
 				from: scrollTop,
-				to  : scrollTop + _.viewport.getHeight()
+				to  : scrollTop + getViewHeight()
 			},
 			lineLayout = {
 				top: null,
@@ -219,13 +214,17 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 
 	function getMiddleVisibleLineNum() {
 		const topHiddenSpace = _.viewport.scrollTop;
-		return Math.floor((topHiddenSpace + getViewHeight() / 2) / _.lineHeight);
+		return Math.floor(
+			(topHiddenSpace + getViewHeight() / 2) / _.lineHeight
+		);
 	}
 
 	function getMiddleFullyVisibleLineNum() {
 		const 
 			topHiddenSpace = _.viewport.scrollTop,
-			num = Math.floor((topHiddenSpace + getViewHeight() / 2) / _.lineHeight);
+			num = Math.floor(
+				(topHiddenSpace + getViewHeight() / 2) / _.lineHeight
+			);
 		if (isItFullVisible(num))
 			return num;
 		else 
@@ -235,7 +234,9 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 	function getLastFullyVisibleLineNum() {
 		const 
 			topHiddenSpace = _.viewport.scrollTop,
-			num = Math.floor((topHiddenSpace + getViewHeight()) / _.lineHeight) - 1;
+			num = Math.floor(
+				(topHiddenSpace + getViewHeight()) / _.lineHeight
+			) - 1;
 		if (isItFullVisible(num))
 			return num;
 		else 
@@ -248,9 +249,9 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 	}
 
 	function getMaxScrollTop() {
-		return _.viewport.scrollHeight - _.viewport.getHeight();
+		return _.viewport.scrollHeight - getViewHeight();
 		/*return _.allLinesCount * _.lineHeight 
-			- _.viewport.getHeight();*/
+			- getViewHeight();*/
 	}
 
 	function setOnTop(strNum) {
@@ -259,20 +260,19 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 
 
 	function setOnBottom(strNum) {
-		_.viewport.scrollTop = strNum * _.lineHeight - _.getViewHeight() + _.lineHeight;
+		_.viewport.scrollTop = strNum * _.lineHeight 
+			- getViewHeight() + _.lineHeight;
 	}
 
 	function setOnMiddle(strNum) {
-		_.viewport.scrollTop = strNum * _.lineHeight - (_.getViewHeight() - _.lineHeight) / 2;
+		_.viewport.scrollTop = strNum * _.lineHeight 
+			- (getViewHeight() - _.lineHeight) / 2;
 	}
 
 
 	function getViewHeight() {
-		return _.viewport.getBoundingClientRect().height;
-	}
-
-	function getHalfVisibleLinesCount() {
-		return Math.floor(_.getViewHeight() / _.lineHeight + 2);
+		return parseInt(getComputedStyle(_.viewport).height);
+		// return _.viewport.getBoundingClientRect().height;
 	}
 
 	function create(html) {
