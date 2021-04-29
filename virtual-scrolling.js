@@ -50,6 +50,7 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 		getMiddleFullyVisibleLineNum, // Возвращает номер средней полностью видимой строки.
 		getLastFullyVisibleLineNum,   // Возвращает номер последней полностью видимой строки.
 		getLastSemiVisibleLineNum,    // Возвращает номер последней частично видимой строки.
+		getMaxScrollTop,              // Возвращает максимально возможный scrollTop.
 		setOnTop,                     // Задаёт номер строки, которую нужно установить вверху.
 		setOnMiddle,                  // Задаёт номер строки, которую нужно установить по середине.
 		setOnBottom,                  // Задаёт номер строки, которую нужно установить внизу.
@@ -244,6 +245,12 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 	function getLastSemiVisibleLineNum() {
 		const topHiddenSpace = _.viewport.scrollTop;
 		return Math.floor((topHiddenSpace + getViewHeight()) / _.lineHeight);
+	}
+
+	function getMaxScrollTop() {
+		return _.viewport.scrollHeight - _.viewport.getHeight();
+		/*return _.allLinesCount * _.lineHeight 
+			- _.viewport.getHeight();*/
 	}
 
 	function setOnTop(strNum) {
