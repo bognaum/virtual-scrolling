@@ -163,12 +163,18 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 
 				return n;
 			})();
+			lineLayout.top = Math.max(
+				Math.floor(viewOvLoc.from / _.lineHeight) - 1, 0);
 			lineLayout.show = (() => {
 				let n = Math.ceil(viewOvLoc.to / _.lineHeight) + 1;
 				n = (_.allLinesCount < n)? _.allLinesCount : n;
 
 				return  n - lineLayout.top;
 			})();
+			lineLayout.show = Math.min(
+				Math.ceil(viewOvLoc.to / _.lineHeight) + 1, 
+				_.allLinesCount
+			) - lineLayout.top;
 			lineLayout.bottom = _.allLinesCount 
 				- lineLayout.top - lineLayout.show;
 
