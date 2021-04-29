@@ -4,15 +4,22 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<!-- <script type="text/javascript" src="./../virtual-scrolling.js"></script> -->
+	<style>
+		.container {
+			margin: 10px 100px 500px 100px;
+		}
+	</style>
 	<title>virtual-scrolling</title>
 </head>
 <body>
 	<div class="container">
+		<h2>1</h2>
 		<div id="vp1" style="
 			height: 400px; 
 			width: 500px; 
 			border: 1px solid #000;
 			overflow: auto;
+			display: inline-block;
 			/*padding: 100px;*/
 		"></div>
 		<script type="module">
@@ -21,6 +28,62 @@
 			const vp1API = virtualScrolling(vp1, getLine, 100, 30);
 
 			window.vp1API = vp1API;
+
+			function getLine(num) {
+				return eHTML(`<div style="
+					height: 28px; 
+					border: 1px solid #333;
+				">${num}</div>`);
+			}
+
+			function eHTML(code, shell=null) {
+				const _shell = 
+					! shell                  ? document.createElement("div") :
+					typeof shell == "string" ? document.createElement(shell) :
+					typeof shell == "object" ? shell :
+						null;
+				_shell.innerHTML = code;
+				return _shell.children[0];
+			}
+		</script>
+
+		<h2>2</h2>
+		<div id="vp2" style="
+			height: 400px; 
+			width: 500px; 
+			border: 1px solid #000;
+			/*overflow: auto;*/
+			overflow: hidden;
+			display: inline-block;
+			/*padding: 100px;*/
+		"></div>
+		 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; 
+		<div id="sb2" style="
+			width: 18px;
+			height: 400px; 
+			display: inline-block;
+			overflow-y: scroll;
+		">
+			<div style="height: 3000px;"></div>
+		</div>
+		<script type="module">
+			import virtualScrolling from "./../virtual-scrolling.js";
+			
+			const vp2API = virtualScrolling(vp2, getLine, 100, 30);
+
+			window.vp2API = vp2API;
+
+			sb2.onscroll = function(eo) {
+				vp2.scrollTop = this.scrollTop;
+			}
+
+			/*vp2.onscroll = function(eo) {
+				sb2.scrollTop = this.scrollTop;
+			}*/
+
+			/*vp2API.onAfterRender = function() {
+				sb2.scrollTop = this.viewport.scrollTop;
+			}*/
 
 			function getLine(num) {
 				return eHTML(`<div style="
