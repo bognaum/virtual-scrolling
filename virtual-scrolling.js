@@ -6,7 +6,7 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 
 	var _ = {
 		viewport,
-		carriage : null,
+		carriage : create(`<div class="carriage"></div>`),
 		getViewHeight,
 		allLinesCount,
 		lineHeight,
@@ -21,12 +21,8 @@ export default function virtualScrolling(viewport, getLine, allLinesCount, lineH
 		showLNums: [0],
 	};
 
-	_.allLinesHeight = _.allLinesCount * _.lineHeight;
-	_.lastLineNum = _.allLinesCount - 1;
-
 	_.viewport.dataset.virtual_scrollingVer = version;
 
-	_.carriage = create(`<div class="carriage"></div>`);
 
 	_.viewport.appendChild(_.carriage);
 	_.viewport.addEventListener("scroll", function(e) {
